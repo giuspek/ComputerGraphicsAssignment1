@@ -56,14 +56,18 @@ A: I used my own PC.
 (Try to get everything done! Based on previous data, virtually everyone who put in the work and did well in the first two assignments ended up finishing the course, and also reported a high level of satisfaction at the end of the course.)
 
                             opened this file (0p): done
-                         R1 Moving an object (1p): not done
-R2 Generating a simple cone mesh and normals (3p): not done
-  R3 Converting mesh data for OpenGL viewing (3p): not done
-           R4 Loading a large mesh from file (3p): not done
+                         R1 Moving an object (1p): done
+R2 Generating a simple cone mesh and normals (3p): done
+  R3 Converting mesh data for OpenGL viewing (3p): done
+           R4 Loading a large mesh from file (3p): done
 
 # Did you do any extra credit work?
 
 (Describe what you did and, if there was a substantial amount of work involved, how you did it. Also describe how to use/activate your extra features, if they are interactive.)
+
+A: - Version Control
+- Animation of camera
+- Rotation and scaling transform
 
 # Are there any known problems/bugs remaining in your code?
 
@@ -71,7 +75,6 @@ R2 Generating a simple cone mesh and normals (3p): not done
 
 # Did you collaborate with anyone in the class?
 
-(Did you help others? Did others help you? Let us know who you talked to, and what sort of help you gave or received.)
 
 # Any other comments you'd like to share about the assignment or the course so far?
 

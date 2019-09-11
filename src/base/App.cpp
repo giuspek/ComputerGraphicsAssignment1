@@ -167,7 +167,10 @@ App::App(void)
 	shading_toggle_			(false),
 	shading_mode_changed_	(false),
 	camera_rotation_angle_	(0.0f),
-	translation_			(Vec3f(0.0f,0.0f,0.0f))
+	translation_			(Vec3f(0.0f,0.0f,0.0f)),
+	rotation_y_				(0.0f),
+	scaling_x_				(1.0f),
+	animating_				(false)
 {
 	static_assert(is_standard_layout<Vertex>::value, "struct Vertex must be standard layout to use offsetof");
 	initRendering();
@@ -189,6 +192,9 @@ App::App(void)
 }
 
 bool App::handleEvent(const Window::Event& ev) {
+	if(animating_) {
+		camera_rotation_angle_ -= timer_.end();
+	}
 	if (model_changed_)	{
 		model_changed_ = false;
 		switch (current_model_)
@@ -252,6 +258,25 @@ bool App::handleEvent(const Window::Event& ev) {
 			translation_[2] += 0.05;
 		else if (ev.key == FW_KEY_S)
 			translation_[2] -= 0.05;
+		else if (ev.key == FW_KEY_R) {
+			if (!animating_) {
+				animating_ = 1 - animating_;
+				timer_.start();
+			}
+			else {
+				animating_ = 1 - animating_;
+				timer_.unstart();
+			}
+				
+		}
+		else if (ev.key == FW_KEY_Q)
+			scaling_x_ -= 0.05;
+		else if (ev.key == FW_KEY_E)
+			scaling_x_ += 0.05;
+		else if (ev.key == FW_KEY_A)
+			rotation_y_ += (2 * FW_PI) / 360;
+		else if (ev.key == FW_KEY_D)
+			rotation_y_ -= (2 * FW_PI)/ 360;
 	}
 	
 	if (ev.type == Window::EventType_KeyUp) {
@@ -411,7 +436,15 @@ void App::render() {
 	// YOUR CODE HERE (R1)
 	// Set the model space -> world space transform to translate the model according to user input.
 	Mat4f modelToWorld = Mat4f();
-	modelToWorld.setCol(3, Vec4f(translation_, 1.0f));
+	Mat4f T, R, S;
+	T.setCol(3, Vec4f(translation_, 1.0f));
+	R.setRow(0, Vec4f(FW::cos(rotation_y_), 0.0f, FW::sin(rotation_y_), 0.0f));
+	R.setRow(2, Vec4f(-FW::sin(rotation_y_), 0.0f, FW::cos(rotation_y_), 0.0f));
+	S.m00 = scaling_x_;
+
+	modelToWorld = S * modelToWorld;
+	modelToWorld = R * modelToWorld;
+	modelToWorld = T * modelToWorld;
 	
 	// Draw the model with your model-to-world transformation.
 	glUniformMatrix4fv(gl_.model_to_world_uniform, 1, GL_FALSE, modelToWorld.getPtr());

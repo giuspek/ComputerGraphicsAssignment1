@@ -61,6 +61,8 @@ private:
 	std::vector<Vertex>	vertices_;
 
 	float				camera_rotation_angle_;
+	float				scaling_x_;
+	float				rotation_y_;
 
 	// YOUR CODE HERE (R1)
 	// Add a class member to store the current translation.
@@ -70,7 +72,8 @@ private:
 	// For animation extra credit you can use the framework's Timer class.
 	// The .start() and .unstart() methods start and stop the timer; when it's
 	// running, .end() gives you seconds passed after last call to .end().
-	// Timer timer_;
+	Timer				timer_;
+	bool				animating_;
 };
 
 }
