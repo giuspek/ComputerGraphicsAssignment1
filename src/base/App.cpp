@@ -153,7 +153,8 @@ App::App(void)
 	model_changed_			(true),
 	shading_toggle_			(false),
 	shading_mode_changed_	(false),
-	camera_rotation_angle_	(0.0f)
+	camera_rotation_angle_	(0.0f),
+	translation_			(Vec3f(0.0f,0.0f,0.0f))
 {
 	static_assert(is_standard_layout<Vertex>::value, "struct Vertex must be standard layout to use offsetof");
 	initRendering();
@@ -226,6 +227,18 @@ bool App::handleEvent(const Window::Event& ev) {
 			camera_rotation_angle_ -= 0.05 * FW_PI;
 		else if (ev.key == FW_KEY_END)
 			camera_rotation_angle_ += 0.05 * FW_PI;
+		else if (ev.key == FW_KEY_UP)
+			translation_[1] += 0.05;
+		else if (ev.key == FW_KEY_DOWN)
+			translation_[1] -= 0.05;
+		else if (ev.key == FW_KEY_LEFT)
+			translation_[0] -= 0.05;
+		else if (ev.key == FW_KEY_RIGHT)
+			translation_[0] += 0.05;
+		else if (ev.key == FW_KEY_W)
+			translation_[2] += 0.05;
+		else if (ev.key == FW_KEY_S)
+			translation_[2] -= 0.05;
 	}
 	
 	if (ev.type == Window::EventType_KeyUp) {
@@ -384,7 +397,8 @@ void App::render() {
 	
 	// YOUR CODE HERE (R1)
 	// Set the model space -> world space transform to translate the model according to user input.
-	Mat4f modelToWorld;
+	Mat4f modelToWorld = Mat4f();
+	modelToWorld.setCol(3, Vec4f(translation_, 1.0f));
 	
 	// Draw the model with your model-to-world transformation.
 	glUniformMatrix4fv(gl_.model_to_world_uniform, 1, GL_FALSE, modelToWorld.getPtr());

@@ -3,8 +3,8 @@
 #
 # Assignment 1: Introduction
 
-Student name:
-Student number:
+Student name: 785354
+Student number: Giuseppe Spallitta
 Hours spent on requirements (approx.):
 Hours spent on extra credit (approx.):
 
@@ -13,30 +13,40 @@ Hours spent on extra credit (approx.):
 # They will not be judged or affect your points, but please answer all of them.
 # Keep it short; answering shouldn't take you more than 5-10 minutes.
 
-- What are you studying here at Aalto? (Department, major, minor...?)
+- What are you studying here at Aalto? (Department, major, minor...?) 
+A: Exchange student, Computer Science department
 
 - Which year of your studies is this?
+A: Master Degree, 2nd year
 
 - Is this a mandatory course for you?
+A: No
 
 - Have you had something to do with graphics before? Other studies, personal interests, work?
+A: I started some tutorials about computer graphics using Unity, but it was only a spare time activity.
 
 - Do you remember basic linear algebra? Matrix and vector multiplication, cross product, that sort of thing?
+A: Yes
 
 - How is your overall programming experience? What language are you most comfortable with?
+A: I'm quite confident in my programming skills. The language I prefer the most is Python, but also C++ and Java are not a problem.
 
 - Do you have some experience with these things? (If not, do you have experience with something similar such as C or Direct3D?)
-C++:
-C++11:
-OpenGL:
+C++: YES
+C++11: NO
+OpenGL: NO
 
 - Have you used a version control system such as Git, Mercurial or Subversion? Which ones?
+A: Yes, Git.
 
 - Did you go to the technology lecture?
+A: Yes
 
 - Did you go to exercise sessions?
+A: No
 
 - Did you work on the assignment using Aalto computers, your own computers, or both?
+A: I used my own PC.
 
 # Which parts of the assignment did you complete? Mark them 'done'.
 # You can also mark non-completed parts as 'attempted' if you spent a fair amount of
