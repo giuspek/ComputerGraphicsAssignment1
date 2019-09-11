@@ -56,6 +56,7 @@ vector<Vertex> unpackIndexedData(
 	const vector<array<unsigned, 6>>& faces)
 {
 	vector<Vertex> vertices;
+	Vertex v0, v1, v2;
 
 	// This is a 'range-for' loop which goes through all objects in the container 'faces'.
 	// '&' gives us a reference to the object inside the container; if we omitted '&',
@@ -72,6 +73,9 @@ vector<Vertex> unpackIndexedData(
 		// f[1] is the index of the normal of the first vertex
 		// f[2] is the index of the position of the second vertex
 		// ...
+		v0.position = positions[f[0]]; v1.position = positions[f[2]]; v2.position = positions[f[4]];
+		v0.normal = normals[f[1]]; v1.normal = normals[f[3]]; v2.normal = normals[f[5]];
+		vertices.push_back(v0); vertices.push_back(v1); vertices.push_back(v2);
 	}
 
 	return vertices;
