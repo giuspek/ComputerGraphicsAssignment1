@@ -136,10 +136,19 @@ vector<Vertex> loadUserGeneratedModel() {
 		//    of the ith vertex at the base of the cone. Z-coordinate is very similar.
 		// - For the normal calculation, you'll want to use the cross() function for
 		//   cross product, and Vec3f's .normalized() or .normalize() methods.
-		
+
+		v0.position = Vec3f(0.0f, 0.0f, 0.0f);
+		v1.position = Vec3f(FW::cos(angle_increment * i) * radius, -1.0f, FW::sin(angle_increment * i) * radius);
+		v2.position = Vec3f(FW::cos(angle_increment * ((i + 1) % faces)) * radius, -1.0f, FW::sin(angle_increment * ((i + 1) % faces)) * radius);
+		v0.normal = v1.normal = v2.normal = cross(v2.position - v0.position, v1.position - v0.position).normalized();
 		// Then we add the vertices to the array.
 		// .push_back() grows the size of the vector by one, copies its argument,
 		// and places the copy at the back of the vector.
+		vertices.push_back(v0); vertices.push_back(v1); vertices.push_back(v2);
+		v0.position = Vec3f(0.0f, -1.0f, 0.0f);
+		v1.position = Vec3f(FW::cos(angle_increment * i) * radius, -1.0f, FW::sin(angle_increment * i) * radius);
+		v2.position = Vec3f(FW::cos(angle_increment * ((i + 1) % faces)) * radius, -1.0f, FW::sin(angle_increment * ((i + 1) % faces)) * radius);
+		v0.normal = v1.normal = v2.normal = (cross((v2.position - v0.position), (v1.position - v0.position)).normalized());
 		vertices.push_back(v0); vertices.push_back(v1); vertices.push_back(v2);
 	}
 	return vertices;
