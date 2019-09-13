@@ -61,6 +61,7 @@ private:
 	std::vector<Vertex>	vertices_;
 
 	float				camera_rotation_angle_;
+	float				camera_z_angle_;
 	float				scaling_x_;
 	float				rotation_y_;
 
@@ -74,6 +75,8 @@ private:
 	// running, .end() gives you seconds passed after last call to .end().
 	Timer				timer_;
 	bool				animating_;
+	bool				dragging_;
+	Vec3f				origin_drag_;
 };
 
 }

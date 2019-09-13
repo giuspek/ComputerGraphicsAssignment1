@@ -167,9 +167,11 @@ App::App(void)
 	shading_toggle_			(false),
 	shading_mode_changed_	(false),
 	camera_rotation_angle_	(0.0f),
+	camera_z_angle_			(0.0f),
 	translation_			(Vec3f(0.0f,0.0f,0.0f)),
 	rotation_y_				(0.0f),
 	scaling_x_				(1.0f),
+	dragging_				(false),
 	animating_				(false)
 {
 	static_assert(is_standard_layout<Vertex>::value, "struct Vertex must be standard layout to use offsetof");
@@ -283,11 +285,25 @@ bool App::handleEvent(const Window::Event& ev) {
 	}
 
 	if (ev.type == Window::EventType_Mouse) {
+		if (dragging_) {
+			camera_rotation_angle_ += ev.mouseDelta[0] * 0.005;
+			camera_z_angle_ += ev.mouseDelta[1] * 0.005;
+
+		}
 		// EXTRA: you can put your mouse controls here.
 		// Event::mouseDelta gives the distance the mouse has moved.
 		// Event::mouseDragging tells whether some mouse buttons are currently down.
 		// If you want to know which ones, you have to keep track of the button down/up events
 		// (e.g. FW_KEY_MOUSE_LEFT).
+		if (ev.mouseDragging) {
+			if (!dragging_) {
+				dragging_ = true;
+				origin_drag_ = Vec3f();
+			}
+		}
+		else {
+			dragging_ = false;
+		}
 	}
 
 	if (ev.type == Window::EventType_Close) {
@@ -363,7 +379,12 @@ void App::initRendering() {
 		void main()
 		{
 			// EXTRA: oops, someone forgot to transform normals here...
-			float clampedCosine = clamp(dot(aNormal, directionToLight), 0.0, 1.0);
+			mat4 uModelToWorld_inverse = inverse(uModelToWorld);
+			mat4 uModelToWorld_T = transpose(uModelToWorld_inverse);
+			vec4 aNormal_transformed = uModelToWorld_T * vec4(aNormal, 1.0);
+			vec3 aNormal_xyz = aNormal_transformed.xyz;
+			aNormal_xyz = normalize(aNormal_xyz);
+			float clampedCosine = clamp(dot(aNormal_xyz, directionToLight), 0.0, 1.0);
 			vec3 litColor = vec3(clampedCosine);
 			vec3 generatedColor = distinctColors[gl_VertexID % 6];
 			// gl_Position is a built-in output variable that marks the final position
@@ -407,9 +428,11 @@ void App::render() {
 	static const float camera_distance = 2.1f;	
 	Mat4f C;
 	Mat3f rot = Mat3f::rotation(Vec3f(0, 1, 0), -camera_rotation_angle_);
-	C.setCol(0, Vec4f(rot.getCol(0), 0));
-	C.setCol(1, Vec4f(rot.getCol(1), 0));
-	C.setCol(2, Vec4f(rot.getCol(2), 0));
+	Mat3f rot2 = Mat3f::rotation(Vec3f(1, 0,0), -camera_z_angle_);
+	Mat3f rot3 = rot * rot2;
+	C.setCol(0, Vec4f(rot3.getCol(0), 0));
+	C.setCol(1, Vec4f(rot3.getCol(1), 0));
+	C.setCol(2, Vec4f(rot3.getCol(2), 0));
 	C.setCol(3, Vec4f(0, 0, camera_distance, 1));
 	
 	// Simple perspective.
