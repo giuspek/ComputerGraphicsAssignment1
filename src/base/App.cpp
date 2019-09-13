@@ -496,67 +496,269 @@ vector<Vertex> App::loadObjFileModel(string filename) {
 
 	// Open input file stream for reading.
 	ifstream input(filename, ios::in);
-
-	// Read the file line by line.
 	string line;
-	while(getline(input, line)) {
-		// Replace any '/' characters with spaces ' ' so that all of the
-		// values we wish to read are separated with whitespace.
-		for (auto& c : line)
-			if (c == '/')
-				c = ' ';
-			
+	int face_number = 0, vertex_number = 0, normal_number = 0;
+	string word;
+
+	// FORMAT: 0 AASCI - 1 BIG ENDIAN - 2 LITTLE ENDIAN
+	int format = 0;
+
+	if (filename.compare(filename.size() - 3, 3, "obj") == 0) {
+		// Read the file line by line.
+
+		while (getline(input, line)) {
+			// Replace any '/' characters with spaces ' ' so that all of the
+			// values we wish to read are separated with whitespace.
+			for (auto& c : line)
+				if (c == '/')
+					c = ' ';
+
+			// Temporary objects to read data into.
+			array<unsigned, 6>  f; // Face index array
+			Vec3f               v;
+			string              s;
+
+			// Create a stream from the string to pick out one value at a time.
+			istringstream        iss(line);
+
+			// Read the first token from the line into string 's'.
+			// It identifies the type of object (vertex or normal or ...)
+			iss >> s;
+
+			if (s == "v") { // vertex position
+				// YOUR CODE HERE (R4)
+				float a, b, c;
+				iss >> a;
+				iss >> b;
+				iss >> c;
+				// Read the three vertex coordinates (x, y, z) into 'v'.
+				v = Vec3f(a, b, c);
+				positions.push_back(v);
+				// Store a copy of 'v' in 'positions'.
+				// See std::vector documentation for push_back.
+			}
+			else if (s == "vn") { // normal
+			 // YOUR CODE HERE (R4)
+			 // Similar to above.
+				float a, b, c;
+				iss >> a;
+				iss >> b;
+				iss >> c;
+				v = Vec3f(a, b, c);
+				normals.push_back(v);
+			}
+			else if (s == "f") { // face
+			 // YOUR CODE HERE (R4)
+			 // Read the indices representing a face and store it in 'faces'.
+			 // The data in the file is in the format
+			 // f v1/vt1/vn1 v2/vt2/vn2 ...
+			 // where vi = vertex index, vti = texture index, vni = normal index.
+			 //
+			 // Remember we already replaced the '/' characters with whitespaces.
+			 //
+			 // Since we are not using textures in this exercise, you can ignore
+			 // the texture indices by reading them into a temporary variable.
+				unsigned sink; // Temporary variable for reading the unused texture indices.
+				unsigned temp;
+				int discarded = 0;
+				for (int i = 0; i < 9; i++) {
+					if (i % 3 == 1) {
+						iss >> sink;
+						discarded++;
+					}
+					else {
+						iss >> temp;
+						f[i - discarded] = temp - 1;
+					}
+				}
+				faces.push_back(f);
+
+				// Note that in C++ we index things starting from 0, but face indices in OBJ format start from 1.
+				// If you don't adjust for that, you'll index past the range of your vectors and get a crash.
+
+				// It might be a good idea to print the indices to see that they were read correctly.
+				// cout << f[0] << " " << f[1] << " " << f[2] << " " << f[3] << " " << f[4] << " " << f[5] << endl;
+			}
+		}
+	}
+	// PLY files
+	else {
 		// Temporary objects to read data into.
 		array<unsigned, 6>  f; // Face index array
 		Vec3f               v;
 		string              s;
 
-		// Create a stream from the string to pick out one value at a time.
-		istringstream        iss(line);
+		while (getline(input, line)) {
+			istringstream iss(line);
+			iss >> word;
+			if (word.compare("end_header") == 0)
+				break;
+			if (word.compare("element") == 0) {
+				iss >> word;
+				if (word.compare("vertex") == 0) {
+					iss >> vertex_number;
+				}
+				else if (word.compare("face") == 0) {
+					iss >> face_number;
+				}
+			}
+			else if (word.compare("format") == 0) {
+				iss >> word;
+				if (word.compare("ascii") == 0) {
+					format = 0;
+				}
+				else if (word.compare("binary_big_endian") == 0) {
+					format = 1;
+				}
+				else if (word.compare("binary_little_endian") == 0) {
+					format = 2;
+				}
+			}
+		}
 
-		// Read the first token from the line into string 's'.
-		// It identifies the type of object (vertex or normal or ...)
-		iss >> s;
+		// TODO: ADD BINARY SUPPORT AND POLYGONS
 
-		if (s == "v") { // vertex position
-			// YOUR CODE HERE (R4)
-			// Read the three vertex coordinates (x, y, z) into 'v'.
-			iss >> v[0] >> v[1] >> v[2];
-			// Store a copy of 'v' in 'positions'.
+		// VERTEX READING
+		float a, b, c, sink;
+		for (int i = 0; i < vertex_number; i++) {
+			getline(input, line);
+			istringstream iss(line);
+			iss >> a >> b >> c;
+			v = Vec3f(a, b, c);
 			positions.push_back(v);
-			// See std::vector documentation for push_back.
-		} else if (s == "vn") { // normal
-			// YOUR CODE HERE (R4)
-			iss >> v[0] >> v[1] >> v[2];
-			// Similar to above.
-			normals.push_back(v);
-		} else if (s == "f") { // face
-			// YOUR CODE HERE (R4)
-			// Read the indices representing a face and store it in 'faces'.
-			// The data in the file is in the format
-			// f v1/vt1/vn1 v2/vt2/vn2 ...
-			// where vi = vertex index, vti = texture index, vni = normal index.
-			//
-			// Remember we already replaced the '/' characters with whitespaces.
-			//
-			// Since we are not using textures in this exercise, you can ignore
-			// the texture indices by reading them into a temporary variable.
+		}
+		// FACES READING
+		for (int i = 0; i < face_number; i++) {
+			getline(input, line);
+			istringstream iss(line);
 
-			unsigned sink; // Temporary variable for reading the unused texture indices.
+			iss >> sink;
+			vector<int> temp;
+			std::cout << "Face n. " << i << endl;
+			std::cout << sink << " vertices" << endl;
+			for (int j = 0; j < sink; j++) {
+				iss >> a;
+				std::cout << a << " ";
+				temp.push_back(a);
+			}
+			std::cout << endl << endl;
 
-			iss >> f[0] >> sink >> f[1];
-			iss >> f[2] >> sink >> f[3];
-			iss >> f[4] >> sink >> f[5];
+			// EAR CLIPPING ALGORITHM
+			while (temp.size() >= 3) {
 
-			for (int i = 0; i < 6; i++)
-				f[i]--;
-			faces.push_back(f);
+				int index = 0;
+				bool not_found = true;
+				while (not_found) {
 
-			// Note that in C++ we index things starting from 0, but face indices in OBJ format start from 1.
-			// If you don't adjust for that, you'll index past the range of your vectors and get a crash.
+					// SEE IF VERTEX IS CONVEX
+					Vec3f e1, e2;
+					int pos_a, pos_b, pos_c, ind_a, ind_b, ind_c;
+					pos_b = temp[index];
+					ind_b = index;
+					if (index == 0) {
+						pos_a = temp[temp.size() - 1];
+						ind_a = temp.size() - 1;
+					}
+					else {
+						pos_a = temp[index - 1];
+						ind_a = index - 1;
+					}
+					if (index == temp.size() - 1) {
+						pos_c = temp[0];
+						ind_c = 0;
+					}
+					else {
+						pos_c = temp[index + 1];
+						ind_c = index + 1;
+					}
 
-			// It might be a good idea to print the indices to see that they were read correctly.
-			// cout << f[0] << " " << f[1] << " " << f[2] << " " << f[3] << " " << f[4] << " " << f[5] << endl;
+					std::cout << "Index: " << pos_a << "-" << pos_b << "-" << pos_c << endl;
+
+					e1 = Vec3f(positions[pos_a][0] - positions[pos_b][0],
+						positions[pos_a][1] - positions[pos_b][1],
+						positions[pos_a][2] - positions[pos_b][2]);
+
+					e2 = Vec3f(positions[pos_c][0] - positions[pos_b][0],
+						positions[pos_c][1] - positions[pos_b][1],
+						positions[pos_c][2] - positions[pos_b][2]);
+
+					float e1mag = sqrt(e1[0] * e1[0] + e1[1] * e1[1] + e1[2] * e1[2]);
+					float e2mag = sqrt(e2[0] * e2[0] + e2[1] * e2[1] + e2[2] * e2[2]);
+
+					Vec3f e1norm = Vec3f(e1[0] / e1mag, e1[1] / e1mag, e1[2] / e1mag);
+					Vec3f e2norm = Vec3f(e2[0] / e2mag, e2[1] / e2mag, e2[2] / e2mag);
+
+					float angle = acos(e1norm[0] * e2norm[0] + e1norm[1] * e2norm[1] + e1norm[2] * e2norm[2]);
+					// STOP IF ANGLE IS CONCAVE
+					std::cout << "Angle: " << angle << endl;
+					if (angle >= FW_PI) {
+						std::cout << "Concave: next!" << endl;
+						index += 1;
+						continue;
+					}
+
+
+					// NOW WE NEED TO CHECK IF NO OTHER VERTEX IS CONTAINED INSIDE THIS TRIANGLE
+
+					e1 = Vec3f(positions[pos_b][0] - positions[pos_a][0],
+						positions[pos_b][1] - positions[pos_a][1],
+						positions[pos_b][2] - positions[pos_a][2]);
+
+					e2 = Vec3f(positions[pos_b][0] - positions[pos_c][0],
+						positions[pos_b][1] - positions[pos_c][1],
+						positions[pos_b][2] - positions[pos_c][2]);
+
+					Mat3f T;
+					T.setCol(0, positions[pos_a]);
+					T.setCol(1, positions[pos_b]);
+					T.setCol(2, positions[pos_c]);
+					T.invert(); T.transpose();
+					std::cout << "T matrix" << endl;
+					std::cout << T(0, 0) << "\t" << T(0, 1) << "\t" << T(0, 2) << endl;
+					std::cout << T(1, 0) << "\t" << T(1, 1) << "\t" << T(1, 2) << endl;
+					std::cout << T(2, 0) << "\t" << T(2, 1) << "\t" << T(2, 2) << endl;
+					std::cout << "Inside triangle?" << endl;
+
+					bool no_points_inside = true;
+					for (int k = 0; k < temp.size(); k++) {
+						if (k == ind_a || k == ind_b || k == ind_c) {
+							std::cout << k << " is a triangle vertex." << endl;
+							continue;
+						}
+						Vec3f P = positions[temp[k]];
+						std::cout << k << " position: " << P[0] << "-" << P[1] << "-" << P[2] << endl;
+						Vec3f res = T * P;
+						std::cout << k << " triangulation: " << res[0] << " - " << res[1] << " - " << res[2] << endl;
+						float crossval = dot(P - positions[pos_a], cross(e1, e2));
+						std::cout << "Crossval: " << crossval << endl;
+						if (res[0] >= 0 && res[1] >= 0 && res[2] >= 0 && res[1] < 1 && res[2] < 1 && res[0] + res[1] + res[2] == 1) {
+							std::cout << k << " is inside triangle." << endl;
+							no_points_inside = false;
+							break;
+						}
+						std::cout << k << " is not inside triangle." << endl;
+					}
+
+					// IF NO POINT WAS FOUND INSIDE THE TRIANGLE, ADD IT TO TRIANGULATION AND REPEAT
+					if (no_points_inside) {
+						f[0] = pos_a; f[2] = pos_b; f[4] = pos_c;
+
+						// NORMAL DEFINITION
+						Vec3f normal = cross(e1, e2);
+						normal.normalize();
+
+						normals.push_back(normal);
+
+						f[1] = normal_number; f[3] = normal_number; f[5] = normal_number;
+						normal_number += 1;
+						faces.push_back(f);
+
+						// EXTRACT EAR POINT FROM TEMP VECTOR AND BREAK
+						temp.erase(temp.begin() + index);
+						not_found = false;
+					}
+				}
+			}
 		}
 	}
 	common_ctrl_.message(("Loaded mesh from " + filename).c_str());
