@@ -369,6 +369,7 @@ void App::initRendering() {
 		
 		uniform mat4 uModelToWorld;
 		uniform mat4 uWorldToClip;
+		uniform mat4 uModelToWorldTransposed;
 		uniform float uShading;
 		
 		const vec3 distinctColors[6] = vec3[6](
@@ -379,9 +380,7 @@ void App::initRendering() {
 		void main()
 		{
 			// EXTRA: oops, someone forgot to transform normals here...
-			mat4 uModelToWorld_inverse = inverse(uModelToWorld);
-			mat4 uModelToWorld_T = transpose(uModelToWorld_inverse);
-			vec4 aNormal_transformed = uModelToWorld_T * vec4(aNormal, 1.0);
+			vec4 aNormal_transformed = uModelToWorldTransposed * vec4(aNormal, 1.0);
 			vec3 aNormal_xyz = aNormal_transformed.xyz;
 			aNormal_xyz = normalize(aNormal_xyz);
 			float clampedCosine = clamp(dot(aNormal_xyz, directionToLight), 0.0, 1.0);
@@ -409,6 +408,7 @@ void App::initRendering() {
 	gl_.shader_program = shader_program->getHandle();
 	gl_.world_to_clip_uniform = glGetUniformLocation(gl_.shader_program, "uWorldToClip");
 	gl_.model_to_world_uniform = glGetUniformLocation(gl_.shader_program, "uModelToWorld");
+	gl_.model_to_world_transposed_uniform = glGetUniformLocation(gl_.shader_program, "uModelToWorldTransposed");
 	gl_.shading_toggle_uniform = glGetUniformLocation(gl_.shader_program, "uShading");
 }
 
@@ -459,6 +459,7 @@ void App::render() {
 	// YOUR CODE HERE (R1)
 	// Set the model space -> world space transform to translate the model according to user input.
 	Mat4f modelToWorld = Mat4f();
+	
 	Mat4f T, R, S;
 	T.setCol(3, Vec4f(translation_, 1.0f));
 	R.setRow(0, Vec4f(FW::cos(rotation_y_), 0.0f, FW::sin(rotation_y_), 0.0f));
@@ -468,9 +469,15 @@ void App::render() {
 	modelToWorld = S * modelToWorld;
 	modelToWorld = R * modelToWorld;
 	modelToWorld = T * modelToWorld;
+
+	Mat4f modelToWorld_T = modelToWorld;
+
+	modelToWorld_T.invert();
+	modelToWorld_T.transpose();
 	
 	// Draw the model with your model-to-world transformation.
 	glUniformMatrix4fv(gl_.model_to_world_uniform, 1, GL_FALSE, modelToWorld.getPtr());
+	glUniformMatrix4fv(gl_.model_to_world_transposed_uniform, 1, GL_FALSE, modelToWorld_T.getPtr());
 	glBindVertexArray(gl_.dynamic_vao);
 	glDrawArrays(GL_TRIANGLES, 0, vertices_.size());
 
@@ -634,24 +641,25 @@ vector<Vertex> App::loadObjFileModel(string filename) {
 
 			iss >> sink;
 			vector<int> temp;
-			std::cout << "Face n. " << i << endl;
-			std::cout << sink << " vertices" << endl;
+			Vec3f e1, e2;
+			//std::cout << "Face n. " << i << endl;
+			//std::cout << sink << " vertices" << endl;
 			for (int j = 0; j < sink; j++) {
 				iss >> a;
-				std::cout << a << " ";
+				//std::cout << a << " ";
 				temp.push_back(a);
 			}
-			std::cout << endl << endl;
+			//std::cout << endl << endl;
 
 			// EAR CLIPPING ALGORITHM
-			while (temp.size() >= 3) {
+			while (temp.size() > 3) {
 
 				int index = 0;
 				bool not_found = true;
 				while (not_found) {
 
 					// SEE IF VERTEX IS CONVEX
-					Vec3f e1, e2;
+					
 					int pos_a, pos_b, pos_c, ind_a, ind_b, ind_c;
 					pos_b = temp[index];
 					ind_b = index;
@@ -672,7 +680,7 @@ vector<Vertex> App::loadObjFileModel(string filename) {
 						ind_c = index + 1;
 					}
 
-					std::cout << "Index: " << pos_a << "-" << pos_b << "-" << pos_c << endl;
+					//std::cout << "Index: " << pos_a << "-" << pos_b << "-" << pos_c << endl;
 
 					e1 = Vec3f(positions[pos_a][0] - positions[pos_b][0],
 						positions[pos_a][1] - positions[pos_b][1],
@@ -690,9 +698,9 @@ vector<Vertex> App::loadObjFileModel(string filename) {
 
 					float angle = acos(e1norm[0] * e2norm[0] + e1norm[1] * e2norm[1] + e1norm[2] * e2norm[2]);
 					// STOP IF ANGLE IS CONCAVE
-					std::cout << "Angle: " << angle << endl;
+					//std::cout << "Angle: " << angle << endl;
 					if (angle >= FW_PI) {
-						std::cout << "Concave: next!" << endl;
+						//std::cout << "Concave: next!" << endl;
 						index += 1;
 						continue;
 					}
@@ -704,20 +712,20 @@ vector<Vertex> App::loadObjFileModel(string filename) {
 						positions[pos_b][1] - positions[pos_a][1],
 						positions[pos_b][2] - positions[pos_a][2]);
 
-					e2 = Vec3f(positions[pos_b][0] - positions[pos_c][0],
-						positions[pos_b][1] - positions[pos_c][1],
-						positions[pos_b][2] - positions[pos_c][2]);
+					e2 = Vec3f(positions[pos_c][0] - positions[pos_a][0],
+						positions[pos_c][1] - positions[pos_a][1],
+						positions[pos_c][2] - positions[pos_a][2]);
 
 					Mat3f T;
 					T.setCol(0, positions[pos_a]);
 					T.setCol(1, positions[pos_b]);
 					T.setCol(2, positions[pos_c]);
 					T.invert(); T.transpose();
-					std::cout << "T matrix" << endl;
-					std::cout << T(0, 0) << "\t" << T(0, 1) << "\t" << T(0, 2) << endl;
-					std::cout << T(1, 0) << "\t" << T(1, 1) << "\t" << T(1, 2) << endl;
-					std::cout << T(2, 0) << "\t" << T(2, 1) << "\t" << T(2, 2) << endl;
-					std::cout << "Inside triangle?" << endl;
+					//std::cout << "T matrix" << endl;
+					//std::cout << T(0, 0) << "\t" << T(0, 1) << "\t" << T(0, 2) << endl;
+					//std::cout << T(1, 0) << "\t" << T(1, 1) << "\t" << T(1, 2) << endl;
+					//std::cout << T(2, 0) << "\t" << T(2, 1) << "\t" << T(2, 2) << endl;
+					//std::cout << "Inside triangle?" << endl;
 
 					bool no_points_inside = true;
 					for (int k = 0; k < temp.size(); k++) {
@@ -726,17 +734,17 @@ vector<Vertex> App::loadObjFileModel(string filename) {
 							continue;
 						}
 						Vec3f P = positions[temp[k]];
-						std::cout << k << " position: " << P[0] << "-" << P[1] << "-" << P[2] << endl;
+						//std::cout << k << " position: " << P[0] << "-" << P[1] << "-" << P[2] << endl;
 						Vec3f res = T * P;
-						std::cout << k << " triangulation: " << res[0] << " - " << res[1] << " - " << res[2] << endl;
+						//std::cout << k << " triangulation: " << res[0] << " - " << res[1] << " - " << res[2] << endl;
 						float crossval = dot(P - positions[pos_a], cross(e1, e2));
-						std::cout << "Crossval: " << crossval << endl;
+						//std::cout << "Crossval: " << crossval << endl;
 						if (res[0] >= 0 && res[1] >= 0 && res[2] >= 0 && res[1] < 1 && res[2] < 1 && res[0] + res[1] + res[2] == 1) {
-							std::cout << k << " is inside triangle." << endl;
+							//std::cout << k << " is inside triangle." << endl;
 							no_points_inside = false;
 							break;
 						}
-						std::cout << k << " is not inside triangle." << endl;
+						//std::cout << k << " is not inside triangle." << endl;
 					}
 
 					// IF NO POINT WAS FOUND INSIDE THE TRIANGLE, ADD IT TO TRIANGULATION AND REPEAT
@@ -759,6 +767,16 @@ vector<Vertex> App::loadObjFileModel(string filename) {
 					}
 				}
 			}
+
+			f[0] = temp[0]; f[2] = temp[1]; f[4] = temp[2];
+			e1 = positions[temp[1]] - positions[temp[0]];
+			e2 = positions[temp[2]] - positions[temp[0]];
+			Vec3f normal = cross(e1, e2);
+			normal.normalize();
+			normals.push_back(normal);
+			f[1] = normal_number; f[3] = normal_number; f[5] = normal_number;
+			normal_number += 1;
+			faces.push_back(f);
 		}
 	}
 	common_ctrl_.message(("Loaded mesh from " + filename).c_str());
