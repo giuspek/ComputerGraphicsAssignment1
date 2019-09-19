@@ -31,7 +31,8 @@ private:
 		MODEL_EXAMPLE,
 		MODEL_USER_GENERATED,
 		MODEL_FROM_INDEXED_DATA,
-		MODEL_FROM_FILE
+		MODEL_FROM_FILE,
+		MODEL_FROM_FILE2
 	};
 
 public:
@@ -47,6 +48,7 @@ private:
 	void				initRendering();
 	void				render();
 	std::vector<Vertex>	loadObjFileModel(std::string filename);
+	std::vector<Vertex>	loadObjFileModel2(std::string filename);
 
 	Window				window_;
 	CommonControls		common_ctrl_;
@@ -77,6 +79,7 @@ private:
 	bool				animating_;
 	bool				dragging_;
 	Vec3f				origin_drag_;
+	Vec3f				direction_to_light_;
 };
 
 }
