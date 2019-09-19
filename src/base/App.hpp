@@ -66,6 +66,7 @@ private:
 	float				camera_z_angle_;
 	float				scaling_x_;
 	float				rotation_y_;
+	float				fov_angle_;
 
 	// YOUR CODE HERE (R1)
 	// Add a class member to store the current translation.

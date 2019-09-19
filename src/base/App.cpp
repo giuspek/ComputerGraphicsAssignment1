@@ -162,19 +162,20 @@ vector<Vertex> loadUserGeneratedModel() {
 }
 
 App::App(void)
-:   common_ctrl_			(CommonControls::Feature_Default & ~CommonControls::Feature_RepaintOnF5),
-	current_model_			(MODEL_EXAMPLE),
-	model_changed_			(true),
-	shading_toggle_			(false),
-	shading_mode_changed_	(false),
-	camera_rotation_angle_	(0.0f),
-	camera_z_angle_			(0.0f),
-	translation_			(Vec3f(0.0f,0.0f,0.0f)),
-	rotation_y_				(0.0f),
-	scaling_x_				(1.0f),
-	dragging_				(false),
-	animating_				(false),
-	direction_to_light_		(Vec3f(0.5f,0.5f, -0.6f))
+	: common_ctrl_(CommonControls::Feature_Default & ~CommonControls::Feature_RepaintOnF5),
+	current_model_(MODEL_EXAMPLE),
+	model_changed_(true),
+	shading_toggle_(false),
+	shading_mode_changed_(false),
+	camera_rotation_angle_(0.0f),
+	camera_z_angle_(0.0f),
+	translation_(Vec3f(0.0f, 0.0f, 0.0f)),
+	rotation_y_(0.0f),
+	scaling_x_(1.0f),
+	dragging_(false),
+	animating_(false),
+	direction_to_light_(Vec3f(0.5f, 0.5f, -0.6f)),
+	fov_angle_(FW_PI/2)
 {
 	static_assert(is_standard_layout<Vertex>::value, "struct Vertex must be standard layout to use offsetof");
 	initRendering();
@@ -294,6 +295,10 @@ bool App::handleEvent(const Window::Event& ev) {
 			rotation_y_ += (2 * FW_PI) / 360;
 		else if (ev.key == FW_KEY_D)
 			rotation_y_ -= (2 * FW_PI)/ 360;
+		else if (ev.key == FW_KEY_O)
+			fov_angle_ += (2 * FW_PI) / 360;
+		else if (ev.key == FW_KEY_L)
+			fov_angle_ -= (2 * FW_PI) / 360;
 	}
 	
 	if (ev.type == Window::EventType_KeyUp) {
@@ -451,7 +456,7 @@ void App::initRendering() {
 void App::render() {
 	// Clear screen.
 	Vec2i w = window_.getSize();
-	glViewport((w[0] - min(w[0],w[1]))/2 , (w[1] - min(w[0], w[1])) / 2, min(w[0], w[1]), min(w[0], w[1]));
+	//glViewport((w[0] - min(w[0],w[1]))/2 , (w[1] - min(w[0], w[1])) / 2, min(w[0], w[1]), min(w[0], w[1]));
 	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
@@ -476,8 +481,10 @@ void App::render() {
 	// Simple perspective.
 	static const float fnear = 0.1f, ffar = 4.0f;
 	Mat4f P;
-	P.setCol(0, Vec4f(1, 0, 0, 0));
-	P.setCol(1, Vec4f(0, 1, 0, 0));
+	float ratio_window = (w[0] * 1.0) / (w[1]*1.0);
+	float fov_ratio = FW::tan(fov_angle_ / 2);
+	P.setCol(0, Vec4f(1/fov_ratio, 0, 0, 0));
+	P.setCol(1, Vec4f(0, ratio_window/fov_ratio, 0, 0));
 	P.setCol(2, Vec4f(0, 0, (ffar+fnear)/(ffar-fnear), 1));
 	P.setCol(3, Vec4f(0, 0, -2*ffar*fnear/(ffar-fnear), 0));
 
